@@ -1,0 +1,47 @@
+//Solution cohèrente avec la description PoSM proposée dans le chapitre 2 mais cette solution est fausse
+
+
+Configuration AtmBank
+    Component Atm
+	Port PAtm = _authenticate -> Rauthenticate -> ( TICK  |~|
+                   _debit -> Rdebit -> TICK |~| 
+		   _consult -> Rconsult ->  (  TICK |~| _debit -> Rdebit -> TICK ))
+
+	Computation = _PAtm.authenticate -> PAtm.Rauthenticate -> ( TICK  |~|
+                  _PAtm.debit -> PAtm.Rdebit -> TICK |~| 
+		_PAtm.consult -> PAtm.Rconsult -> (TICK |~| _PAtm.debit -> PAtm.Rdebit -> TICK))
+
+    Component Bank
+        Port PBank = authenticate -> _Rauthenticate -> ( TICK  []
+                   consult -> _Rconsult -> TICK [] 
+		   debit -> _Rdebit -> ( TICK [] consult -> _Rconsult -> TICK ))
+        
+	Computation = PBank.authenticate -> _PBank.Rauthenticate -> ( TICK  []
+                   PBank.consult -> _PBank.Rconsult -> TICK [] 
+		   PBank.debit -> _PBank.Rdebit -> ( TICK [] PBank.consult -> _PBank.Rconsult -> TICK ))
+
+     Connector AB
+	Role RATM= _authenticate -> Rauthenticate -> ( TICK  |~|
+                   _debit -> Rdebit -> TICK |~| 
+		   _consult -> Rconsult ->  (  TICK |~| _debit -> Rdebit -> TICK ))
+
+	Role RBank= authenticate -> _Rauthenticate -> ( TICK  []
+                   consult -> _Rconsult -> TICK [] 
+		   debit -> _Rdebit -> ( TICK [] consult -> _Rconsult -> TICK ))
+	
+ 	Glue=  RATM.authenticate ->  _RBank.authenticate -> RBank.Rauthenticate-> _RATM.Rauthenticate -> 
+(TICK []
+RATM.debit -> _RBank.debit -> RBank.Rdebit->_RATM.Rdebit-> ( TICK  [] RATM.consult -> _RBank.consult -> RBank.Rconsult->_RATM.Rconsult-> TICK)  []
+
+ RATM.consult -> _RBank.consult -> RBank.Rconsult->_RATM.Rconsult-> (TICK [] RATM.debit -> _RBank.debit -> RBank.Rdebit->_RATM.Rdebit->TICK)
+)
+
+Instances
+	A: ATM
+	B: BANK
+	C: AB
+Attachments
+ A.PATM  As C.RATM
+ B.PBank As C.RBank
+End Configuration
+
